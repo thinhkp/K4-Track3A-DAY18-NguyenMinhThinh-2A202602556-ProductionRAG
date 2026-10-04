@@ -1,0 +1,15 @@
+{
+  "aggregate": {
+    "faithfulness": null,
+    "answer_relevancy": null,
+    "context_precision": null,
+    "context_recall": null
+  },
+  "num_questions": 20,
+  "num_evaluated": 0,
+  "status": "not_evaluated_rate_limit",
+  "provider": "groq",
+  "error": "Production RAGAS stopped after 55 of 80 metric evaluations without saving per-question scores. The baseline run confirmed Groq's 8,000 tokens-per-minute rate limit; evaluation is configured with one worker and slower calls for the next run.",
+  "per_question": [],
+  "failures": []
+}

@@ -36,6 +36,12 @@ def check_json(path: str, required_keys: list[str]) -> bool:
         if missing:
             print(f"  ❌ {path} thiếu keys: {missing}")
             return False
+        if path.endswith(("ragas_report.json", "naive_baseline_report.json")) and (
+            data.get("status") != "evaluated" or data.get("num_questions") != 20
+            or data.get("num_evaluated") != 20
+        ):
+            print(f"  ❌ {path} chưa có đủ điểm RAGAS hợp lệ cho 20 câu hỏi")
+            return False
         print(f"  ✅ {path} — keys OK")
         return True
     except (json.JSONDecodeError, FileNotFoundError) as e:
@@ -62,7 +68,8 @@ def run_tests() -> tuple[int, int]:
         import re
         result = subprocess.run(
             [sys.executable, "-m", "pytest", "tests/", "-v", "--tb=no", "-q"],
-            capture_output=True, text=True, timeout=120, encoding="utf-8", errors="replace"
+            capture_output=True, text=True, timeout=120, encoding="utf-8", errors="replace",
+            env={**os.environ, "GROQ_API_KEY": "", "OPENAI_API_KEY": ""},
         )
         lines = result.stdout.strip().split("\n")
         summary = lines[-1] if lines else ""
@@ -99,7 +106,8 @@ def validate():
 
     # 3. Analysis
     print("\n📝 Analysis:")
-    check_file("analysis/failure_analysis.md")
+    if not check_file("analysis/failure_analysis.md"):
+        errors += 1
 
     # 4. Individual reflections
     print("\n👤 Individual reflections:")
@@ -116,7 +124,8 @@ def validate():
         for r in set(reflections):
             print(f"  ✅ {r}")
     else:
-        print(f"  ⚠️  Chưa có file reflection cá nhân (đặt tại {ref_dir}/reflection_[HọTên].md hoặc analysis/reflection_[HọTên].md)")
+        print(f"  ❌ Chưa có file reflection cá nhân (đặt tại {ref_dir}/reflection_[HọTên].md hoặc analysis/reflection_[HọTên].md)")
+        errors += 1
 
     # 5. TODO count
     print("\n🔧 TODO markers:")
@@ -124,7 +133,8 @@ def validate():
     if todo_count == 0:
         print("  ✅ Không còn TODO nào")
     else:
-        print(f"  ⚠️  Còn {todo_count} TODO chưa implement")
+        print(f"  ❌ Còn {todo_count} TODO chưa implement")
+        errors += 1
 
     # 6. Tests
     print("\n🧪 Auto-tests:")
@@ -134,6 +144,7 @@ def validate():
         print(f"  {'✅' if pct >= 80 else '⚠️'} {passed}/{total} tests passed ({pct:.0f}%)")
     else:
         print("  ⚠️  Không chạy được tests")
+        errors += 1
 
     # 7. Summary
     print("\n" + "=" * 50)

@@ -5,7 +5,10 @@ Basic = paragraph chunking + dense-only search (không hybrid, không rerank, kh
 Đây là RAG đã học ở buổi trước — hôm nay sẽ cải thiện từng bước.
 """
 
-import sys, os, time
+import os
+import sys
+import time
+
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 if hasattr(sys.stderr, "reconfigure"):
@@ -13,10 +16,11 @@ if hasattr(sys.stderr, "reconfigure"):
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from src.m1_chunking import load_documents, chunk_basic
-from src.m2_search import DenseSearch
-from src.m4_eval import load_test_set, evaluate_ragas, save_report
 from config import NAIVE_COLLECTION
+from src.m1_chunking import chunk_basic, load_documents
+from src.m2_search import DenseSearch
+from src.m4_eval import evaluate_ragas, load_test_set, save_report
+from src.llm_provider import chat_completion, llm_settings
 
 
 def main():
@@ -38,25 +42,22 @@ def main():
     test_set = load_test_set()
     questions, answers, all_contexts, ground_truths = [], [], [], []
 
-    from config import OPENAI_API_KEY
-    llm_client = None
-    if OPENAI_API_KEY:
-        from openai import OpenAI
-        llm_client = OpenAI()
+    has_llm = bool(llm_settings()["api_key"])
 
     for i, item in enumerate(test_set):
         results = search.search(item["question"], top_k=3, collection=NAIVE_COLLECTION)
         contexts = [r.text for r in results]
 
-        if llm_client and contexts:
+        if has_llm and contexts:
             try:
                 context_str = "\n\n".join(contexts)
-                resp = llm_client.chat.completions.create(model="gpt-4o-mini", messages=[
+                resp = chat_completion(messages=[
                     {"role": "system", "content": "Trả lời CHỈ dựa trên context. Nếu không có → nói 'Không tìm thấy.'"},
                     {"role": "user", "content": f"Context:\n{context_str}\n\nCâu hỏi: {item['question']}"},
                 ])
                 answer = resp.choices[0].message.content
-            except Exception:
+            except Exception as exc:
+                print(f"  ⚠️  LLM generation failed: {exc}")
                 answer = contexts[0]
         else:
             answer = contexts[0] if contexts else "Không tìm thấy."
@@ -67,14 +68,17 @@ def main():
         ground_truths.append(item["ground_truth"])
         print(f"  [{i+1}/{len(test_set)}] {item['question'][:50]}...", flush=True)
 
-    results = evaluate_ragas(questions, answers, all_contexts, ground_truths)
+    results = evaluate_ragas(questions, answers, all_contexts, ground_truths,
+                             checkpoint_path="reports/baseline_ragas_checkpoint.jsonl")
     print("\nBASIC BASELINE SCORES")
-    for m in ["faithfulness", "answer_relevancy", "context_precision", "context_recall"]:
-        print(f"  {m}: {results.get(m, 0):.4f}")
+    if results.get("status") == "evaluated":
+        for m in ["faithfulness", "answer_relevancy", "context_precision", "context_recall"]:
+            print(f"  {m}: {results.get(m, 0):.4f}")
+    else:
+        print("  Chưa có điểm RAGAS hợp lệ.")
     save_report(results, [], path="reports/naive_baseline_report.json")
-    if all(results.get(m, 0) == 0 for m in ["faithfulness", "answer_relevancy", "context_precision", "context_recall"]):
-        print("\n💡 Lưu ý: Điểm baseline hiển thị 0.00 là bình thường khi chưa hoàn thiện M2 (Dense Search) và M4 (Eval).")
-        print("   Sau khi bạn implement xong các module, hãy chạy 'python main.py' để tự động cập nhật baseline thật và so sánh.")
+    if results.get("status") != "evaluated":
+        print("\nCần khóa API của provider đã chọn để tạo điểm RAGAS thực nghiệm.")
     print("\nDone! Now implement advanced modules and run: python main.py")
 
 

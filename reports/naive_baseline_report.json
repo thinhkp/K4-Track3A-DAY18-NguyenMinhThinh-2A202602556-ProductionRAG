@@ -1,0 +1,15 @@
+{
+  "aggregate": {
+    "faithfulness": null,
+    "answer_relevancy": null,
+    "context_precision": null,
+    "context_recall": null
+  },
+  "num_questions": 20,
+  "num_evaluated": 0,
+  "status": "not_evaluated_rate_limit",
+  "provider": "groq",
+  "error": "Groq HTTP 429: the 8,000 tokens-per-minute limit was reached (5,513 used; the request required 2,657 more). No baseline metrics were completed.",
+  "per_question": [],
+  "failures": []
+}

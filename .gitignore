@@ -3,6 +3,13 @@
 __pycache__/
 *.pyc
 .pytest_cache/
+.deps/
+.tmp/
+pytest-cache-files-*/
 qdrant_data/
+reports/enrichment_cache.jsonl
+reports/production_eval_inputs.json
+reports/production_ragas_checkpoint.jsonl
+reports/baseline_ragas_checkpoint.jsonl
 *.egg-info/
 CODELAB.md

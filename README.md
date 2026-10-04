@@ -21,7 +21,7 @@ Xem **ASSIGNMENT.md** để biết chi tiết từng module và timeline.
 |-----------|-----------|----------|
 | Docker (Qdrant) | ✅ Có | M2 Dense Search |
 | Python 3.11+ | ✅ Có | Tất cả modules (RAGAS cần 3.11+ cho asyncio) |
-| `OPENAI_API_KEY` | ⚠️ M4+M5 | RAGAS eval (M4), Enrichment LLM (M5) |
+| `GROQ_API_KEY` hoặc `OPENAI_API_KEY` | ⚠️ M4+M5 | RAGAS eval (M4), Enrichment LLM (M5) |
 
 **Pre-download models** (tránh timeout trong lab):
 ```bash
@@ -65,10 +65,19 @@ python naive_baseline.py                # Khởi tạo baseline
 ```powershell
 docker compose up -d                    # Khởi động Qdrant vector database
 pip install -r requirements.txt
-Copy-Item .env.example .env             # Tạo file .env và điền OPENAI_API_KEY
+Copy-Item .env.example .env             # Tạo file .env và điền GROQ_API_KEY hoặc OPENAI_API_KEY
 python naive_baseline.py                # Khởi tạo baseline
 ```
 *(Nếu dùng Windows CMD: dùng `copy .env.example .env` thay cho `Copy-Item`)*
+
+### Dùng Groq API
+
+Trong `.env`, đặt `LLM_PROVIDER=groq`, `GROQ_API_KEY` và tùy chọn `GROQ_MODEL`.
+Mặc định dùng `openai/gpt-oss-20b` để sinh đáp án/làm giàu và
+`openai/gpt-oss-120b` để chấm RAGAS qua endpoint tương thích OpenAI của Groq.
+RAGAS dùng embedding đa ngôn ngữ chạy cục bộ qua `EVAL_EMBEDDING_MODEL`; Groq chỉ xử lý phần LLM.
+Chạy pipeline sẽ gửi các đoạn tài liệu, câu hỏi và đáp án kiểm thử tới provider đã chọn.
+Nếu chưa có khóa API, báo cáo sẽ ghi `not_evaluated_missing_api_key` và điểm số `null`.
 
 ## Chạy toàn bộ & Kiểm tra
 
@@ -104,7 +113,7 @@ K4-Track3A-Production-RAG/
 │   └── Nghi_dinh_so_13-2023_ve_bao_ve_du_lieu_ca_nhan_508ee.pdf # Nghị định BVDL (scan, cần OCR)
 ├── test_set.json               # 20 Q&A pairs (6 types: lookup, version, negation, multi-hop, numeric, ambiguous)
 │
-├── src/                        # ★ Scaffold code (có TODO markers)
+├── src/                        # ★ Implemented Production RAG modules
 │   ├── m1_chunking.py          # Module 1: Chunking
 │   ├── m2_search.py            # Module 2: Hybrid Search
 │   ├── m3_rerank.py            # Module 3: Reranking

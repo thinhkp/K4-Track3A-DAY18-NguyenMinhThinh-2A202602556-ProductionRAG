@@ -7,6 +7,13 @@ load_dotenv()
 
 # --- API Keys ---
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "auto").lower()
+GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
+GROQ_EVAL_MODEL = os.getenv("GROQ_EVAL_MODEL", "openai/gpt-oss-120b")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+GROQ_BASE_URL = "https://api.groq.com/openai/v1"
+GROQ_MIN_INTERVAL_SECONDS = float(os.getenv("GROQ_MIN_INTERVAL_SECONDS", "10"))
 
 # --- Qdrant ---
 QDRANT_HOST = "localhost"
@@ -17,6 +24,9 @@ NAIVE_COLLECTION = "lab18_naive"
 # --- Embedding ---
 EMBEDDING_MODEL = "BAAI/bge-m3"
 EMBEDDING_DIM = 1024
+EVAL_EMBEDDING_MODEL = os.getenv(
+    "EVAL_EMBEDDING_MODEL", "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+)
 
 # --- Chunking ---
 HIERARCHICAL_PARENT_SIZE = 2048
